@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Wavelength - Joc Multijugador</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Allow text selection for inputs */
+        input, textarea, [contenteditable] {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-setup {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            touch-action: manipulation;
+        }
+
+        .rounds-selection {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+
+        .rounds-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            touch-action: manipulation;
+        }
+
+        .rounds-btn.selected {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-color: #ff6b6b;
+        }
+
+        .rounds-btn:hover, .rounds-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.98);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 8px;
+            min-height: 50px;
+            touch-action: manipulation;
+        }
+
+        .btn:hover, .btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.secondary {
+            background: linear-gradient(45deg, #4FC3F7, #29B6F6);
+            font-size: 16px;
+            padding: 12px 20px;
+            margin: 5px;
+        }
+
+        .btn.edit {
+            background: linear-gradient(45deg, #FFA726, #FF9800);
+            font-size: 16px;
+            padding: 12px 20px;
+            margin: 5px;
+        }
+
+        .game-board {
+            display: none;
+            text-align: center;
+        }
+
+        .spectrum {
+            background: white;
+            height: 100px;
+            border-radius: 50px;
+            margin: 25px 0;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            touch-action: none;
+        }
+
+        .target-zone {
+            position: absolute;
+            height: 100%;
+            border: 3px solid #333;
+            border-radius: 50px;
+            transition: all 0.5s ease;
+            display: none;
+            overflow: hidden;
+        }
+
+        .target-zone-part {
+            position: absolute;
+            height: 100%;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+            font-size: 20px;
+        }
+
+        .zone-part-1 {
+            background: linear-gradient(135deg, #FFA500, #FFD700);
+        }
+
+        .zone-part-2 {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+        }
+
+        .zone-part-3 {
+            background: linear-gradient(135deg, #87CEEB, #4FC3F7);
+        }
+
+        .zone-part-4 {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+        }
+
+        .zone-part-5 {
+            background: linear-gradient(135deg, #FFA500, #FFD700);
+        }
+
+        .guess-marker {
+            position: absolute;
+            width: 8px;
+            height: 100%;
+            background: #333;
+            border-radius: 4px;
+            top: 0;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .category-display {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-phase-info {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            font-size: 16px;
+        }
+
+        .clue-input {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin: 15px 0;
+        }
+
+        .word-edit-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+
+        .word-inputs {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .word-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            text-align: center;
+        }
+
+        .word-control-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .score-zones {
+            display: none !important;
+        }
+
+        .players-list {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .players-list h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .player-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .score-display {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .controls {
+            margin: 30px 0;
+        }
+
+        .slider-container {
+            margin: 30px 0;
+            padding: 20px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+            touch-action: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+            border: 3px solid #333;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 3px solid #333;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .connected {
+            background: #2ed573;
+            color: white;
+        }
+
+        .disconnected {
+            background: #ff4757;
+            color: white;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .round-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .result-display {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .result-display.success {
+            background: rgba(46, 213, 115, 0.8);
+            color: white;
+            box-shadow: 0 0 20px rgba(46, 213, 115, 0.4);
+        }
+
+        .result-display.failure {
+            background: rgba(255, 71, 87, 0.8);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.4);
+        }
+
+        .congratulations {
+            font-size: 0.6em;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .final-message {
+            font-size: 1.2em;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .final-message.excellent {
+            background: linear-gradient(135deg, #2ed573, #26c56d);
+            color: white;
+        }
+
+        .final-message.great {
+            background: linear-gradient(135deg, #ffa726, #ff9800);
+            color: white;
+        }
+
+        .final-message.good {
+            background: linear-gradient(135deg, #42a5f5, #2196f3);
+            color: white;
+        }
+
+        .final-message.average {
+            background: linear-gradient(135deg, #ab47bc, #9c27b0);
+            color: white;
+        }
+
+        .final-message.poor {
+            background: linear-gradient(135deg, #ef5350, #f44336);
+            color: white;
+        }
+
+        .record-message {
+            font-size: 1.4em;
+            margin: 20px 0;
+            padding: 25px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.6); }
+        }
+
+        .history-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2.2em;
+            }
+
+            .game-setup {
+                padding: 20px;
+            }
+
+            .game-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+
+            .round-info {
+                width: 100%;
+                margin: 5px 0;
+                font-size: 18px;
+                padding: 18px;
+            }
+
+            .spectrum {
+                height: 80px;
+                margin: 30px 5px;
+            }
+
+            .spectrum-labels {
+                font-size: 1.4em;
+                margin-bottom: 15px;
+            }
+
+            .rounds-selection {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .rounds-btn {
+                width: 80%;
+                padding: 18px;
+                font-size: 20px;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 18px;
+                font-size: 20px;
+                margin: 8px 0;
+            }
+
+            .word-control-buttons .btn {
+                width: auto;
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .word-inputs {
+                flex-direction: column;
+            }
+
+            .word-input {
+                min-width: auto;
+            }
+
+            .clue-input {
+                font-size: 18px;
+                padding: 20px;
+            }
+
+            .game-phase-info {
+                padding: 25px;
+                font-size: 18px;
+            }
+
+            .slider-container {
+                padding: 30px 10px;
+            }
+
+            .slider {
+                height: 20px;
+            }
+
+            .slider::-webkit-slider-thumb {
+                width: 50px;
+                height: 50px;
+            }
+
+            .slider::-moz-range-thumb {
+                width: 50px;
+                height: 50px;
+            }
+
+            .result-display {
+                font-size: 1.8em;
+                padding: 25px;
+            }
+
+            .target-zone-part {
+                font-size: 18px;
+            }
+
+            .guess-marker {
+                width: 10px;
+            }
+
+            /* Better touch targets */
+            .player-item {
+                padding: 20px;
+                font-size: 18px;
+            }
+
+            .connection-status {
+                font-size: 16px;
+                padding: 12px 18px;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .spectrum-labels {
+                font-size: 1.2em;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .spectrum-labels span {
+                background: rgba(255, 255, 255, 0.1);
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .spectrum {
+                height: 70px;
+                margin: 20px 2px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+            font-size: 18px;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            border: 4px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .round-scores {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .round-scores h4 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .round-score-item {
+            margin: 8px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        /* Prevent zoom on inputs */
+        @media screen and (-webkit-min-device-pixel-ratio:0) {
+            select,
+            textarea,
+            input[type="text"],
+            input[type="password"],
+            input[type="datetime"],
+            input[type="datetime-local"],
+            input[type="date"],
+            input[type="month"],
+            input[type="time"],
+            input[type="week"],
+            input[type="number"],
+            input[type="email"],
+            input[type="url"],
+            input[type="search"],
+            input[type="tel"] {
+                font-size: 16px;
+            }
+        }
+
+        /* Force hardware acceleration for smooth animations */
+        .spectrum, .target-zone, .guess-marker, .slider, .btn {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+        }
+
+        /* Improve touch responsiveness */
+        .spectrum, .slider-container {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status disconnected" id="connectionStatus">Desconnectat</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🌊 Wavelength</h1>
+            <p>Joc de comunicació multijugador</p>
+        </div>
+
+        <!-- Setup Screen -->
+        <div class="game-setup" id="gameSetup">
+            <div class="input-group">
+                <label for="playerName">El teu nom:</label>
+                <input type="text" id="playerName" placeholder="Escriu el teu nom..." maxlength="20">
+            </div>
+            
+            <div class="input-group">
+                <label for="roomCode">Codi de sala:</label>
+                <input type="text" id="roomCode" placeholder="Escriu o genera un codi..." maxlength="10">
+                <button class="btn" onclick="generateRoomCode()">Generar Codi</button>
+            </div>
+
+            <div class="input-group">
+                <label>Nombre de rondes:</label>
+                <div class="rounds-selection">
+                    <button class="rounds-btn" id="rounds5" onclick="selectRounds(5)">5 Rondes</button>
+                    <button class="rounds-btn selected" id="rounds10" onclick="selectRounds(10)">10 Rondes</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" onclick="joinGame()" id="joinBtn">Unir-se al Joc</button>
+            </div>
+        </div>
+
+        <!-- Waiting Room -->
+        <div class="players-list" id="waitingRoom" style="display:none;">
+            <h3>Jugadors a la sala:</h3>
+            <div id="playersList"></div>
+            <div class="controls" style="margin-top: 20px;">
+                <button class="btn" onclick="startGame()" id="startBtn" style="display:none;">Començar Joc</button>
+                <p id="hostMessage" style="margin-top: 10px; opacity: 0.8;"></p>
+            </div>
+        </div>
+
+        <!-- Game Board -->
+        <div class="game-board" id="gameBoard">
+            <div class="game-info">
+                <div class="round-info">
+                    <strong>Ronda:</strong> <span id="currentRound">1</span>/<span id="totalRounds">10</span>
+                </div>
+                <div class="round-info">
+                    <strong>Torn:</strong> <span id="currentPlayer">-</span>
+                </div>
+                <div class="round-info">
+                    <strong>Puntuació:</strong> <span id="gameScore">0</span>
+                </div>
+            </div>
+
+            <div class="category-display" id="categoryDisplay">
+                <div class="spectrum-labels">
+                    <span id="leftLabel">Esquerra</span>
+                    <span id="rightLabel">Dreta</span>
+                </div>
+                
+                <!-- Word control buttons (only for clue giver) -->
+                <div class="word-control-buttons" id="wordControlButtons" style="display:none;">
+                    <button class="btn secondary" onclick="changeWord()">Canviar Paraula</button>
+                    <button class="btn edit" onclick="toggleEditWord()">Editar Paraula</button>
+                </div>
+
+                <!-- Word editing section -->
+                <div class="word-edit-section" id="wordEditSection">
+                    <h4>Editar Paraules:</h4>
+                    <div class="word-inputs">
+                        <input type="text" id="leftWordInput" class="word-input" placeholder="Paraula esquerra">
+                        <input type="text" id="rightWordInput" class="word-input" placeholder="Paraula dreta">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn" onclick="saveCustomWords()">Guardar</button>
+                        <button class="btn secondary" onclick="cancelEditWord()">Cancel·lar</button>
+                    </div>
+                </div>
+                
+                <div class="game-phase-info" id="gamePhaseInfo">
+                    <p id="roleInfo">Esperant...</p>
+                    
+                    <div id="clueSection" style="display:none;">
+                        <input type="text" id="clueInput" class="clue-input" placeholder="Escriu una paraula o frase que representi la posició...">
+                        <button class="btn" onclick="submitClue()">Enviar Pista</button>
+                    </div>
+                    
+                    <div id="waitingForClue" style="display:none;">
+                        <p>Esperant la pista del donador...</p>
+                    </div>
+                    
+                    <div id="clueDisplay" style="display:none;">
+                        <h3>Pista: "<span id="currentClue"></span>"</h3>
+                        <p>Ara endevina la posició!</p>
+                    </div>
+                    
+                    <div id="resultDisplay" class="result-display" style="display:none;">
+                        <div id="pointsText">Punts: 0</div>
+                        <div id="congratulations" class="congratulations" style="display:none;">FELICITATS</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="score-zones" id="scoreZones" style="display:none;">
+                <div class="score-zone zone-2-left">2</div>
+                <div class="score-zone zone-3-left">3</div>
+                <div class="score-zone zone-4-center">4</div>
+                <div class="score-zone zone-3-right">3</div>
+                <div class="score-zone zone-2-right">2</div>
+            </div>
+
+            <div class="spectrum" id="spectrum">
+                <div class="target-zone" id="targetZone"></div>
+                <div class="guess-marker" id="guessMarker"></div>
+            </div>
+
+            <div class="slider-container" id="sliderContainer" style="display:none;">
+                <input type="range" min="0" max="100" value="50" class="slider" id="guessSlider">
+                <p>Mou el control per fer la teva predicció</p>
+            </div>
+
+            <div class="controls">
+                <button class="btn" onclick="submitGuess()" id="submitBtn" style="display:none;">Enviar Predicció</button>
+                <button class="btn" onclick="nextRound()" id="nextBtn" style="display:none;">Següent Ronda</button>
+            </div>
+
+            <div class="round-scores" id="roundScores" style="display:none;">
+                <h4>Puntuacions per ronda:</h4>
+                <div id="roundScoresList"></div>
+            </div>
+        </div>
+
+        <div class="score-display" id="finalScore" style="display:none;">
+            <h1 style="font-size: 3em; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Joc Finalitzat!</h1>
+            
+            <!-- New Record Message -->
+            <div id="recordMessage" class="record-message" style="display:none;">
+                NOU RÈCORD! 😊
+            </div>
+            
+            <div style="font-size: 2.5em; margin: 30px 0;">
+                <span id="totalScore">0</span>/<span id="maxScore">40</span>
+            </div>
+            <div id="finalMessage" class="final-message" style="font-size: 1.5em; margin: 40px 0;"></div>
+            
+            <div class="round-scores" style="margin-top: 40px;">
+                <h4>Detall de puntuacions:</h4>
+                <div id="finalRoundScores"></div>
+            </div>
+
+            <!-- History Display -->
+            <div class="history-display" id="historyDisplay">
+                <h4>Historial d'aquesta parella:</h4>
+                <div id="historyList"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; margin-top: 40px;">
+                <button class="btn" onclick="startNewGame()" style="font-size: 18px; padding: 15px 30px;">Nova Partida</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, push, remove, onDisconnect, update } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCp-Wfev86Cc-hIyYfsa3L0svleVUlDA18",
+            authDomain: "jocamor-b88bf.firebaseapp.com",
+            databaseURL: "https://jocamor-b88bf-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "jocamor-b88bf",
+            storageBucket: "jocamor-b88bf.firebasestorage.app",
+            messagingSenderId: "601732922650",
+            appId: "1:601732922650:web:4568cd1a3b495b296c40a3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Updated categories with your new list
+        const ALL_CATEGORIES = [
+            ["Ric", "Pobre"],
+            ["Tradicional", "Modern"],
+            ["Introvertit", "Extrovertit"],
+            ["Seriós", "Divertit"],
+            ["Individual", "Col·lectiu"],
+            ["Ciutat", "Camp"],
+            ["Fàcil", "Difícil"],
+            ["Popular", "Desconegut"],
+            ["Evident", "Misteriós"],
+            ["Planificat", "Improvisat"],
+            ["Flexible", "Rígid"],
+            ["Heroi", "Vilà"],
+            ["Mundà", "Espiritual"],
+            ["Humil", "Arrogant"],
+            ["Privat", "Públic"],
+            ["Fama", "Anonimat"],
+            ["Inici", "Final"],
+            ["Solitud", "Companyia"],
+            ["Imaginació", "Realitat"],
+            ["Antipàtic", "Carismàtic"],
+            ["Valent", "Covard"],
+            ["Sensat", "Bojeria"],
+            ["Amor", "Odi"],
+            ["Dolor", "Plaer"],
+            ["Silenci", "Soroll"],
+            ["Petit", "Gran"],
+            ["Elegant", "Informal"],
+            ["Estable", "Inestable"],
+            ["Còmic", "Tràgic"],
+            ["Autèntic", "Fals"],
+            ["Normal", "Estrany"],
+            ["Racional", "Emocional"],
+            ["Jove", "Vell"],
+            ["Estiu", "Hivern"],
+            ["Ràpid", "Lent"],
+            ["Aprop", "Lluny"],
+            ["Curiós", "Indiferent"],
+            ["Alt", "Baix"],
+            ["Extravagant", "Senzill"],
+            ["Domèstic", "Salvatge"],
+            ["Comú", "Rar"],
+            ["Útil", "Inútil"],
+            ["Profund", "Superficial"],
+            ["Respecte", "Manca de respecte"],
+            ["Durador", "Efímer"],
+            ["Passat", "Futur"],
+            ["Complert", "Inacabat"],
+            ["Obvi", "Ocult"],
+            ["Calma", "Drama"],
+            ["Bona pel·lícula", "Mala pel·lícula"],
+            ["Ciutat bonica", "Ciutat lletja"],
+            ["Famós per guapo", "Famós per talent"],
+            ["Vacances tranquil·les", "Vacances boges"],
+            ["Primera cita perfecta", "Primera cita desastre"],
+            ["Mascota adorable", "Mascota terrorífica"],
+            ["Veí simpàtic", "Veí pesat"],
+            ["Superheroi cutre", "Superheroi èpic"],
+            ["Concert increïble", "Concert avorrit"],
+            ["Ex que enyores", "Ex que oblides"],
+            ["Sopar de luxe", "Sopar desastre"],
+            ["Veí silenciós", "Veí sorollós"],
+            ["Joc addictiu", "Joc avorrit"],
+            ["Anunci divertit", "Anunci pesat"],
+            ["Cotxe espectacular", "Cotxe destrossa"],
+            ["Amic fidel", "Amic tòxic"],
+            ["Esport emocionant", "Esport avorrit"],
+            ["Cap genial", "Cap horrorós"],
+            ["Examen fàcil", "Examen impossible"],
+            ["Prof interessant", "Prof avorrit"],
+            ["Casa acollidora", "Casa lletja"],
+            ["Vacances low cost", "Vacances de luxe"],
+            ["Persona magnètica", "Persona avorrida"],
+            ["Sopar romàntic", "Sopar incòmode"],
+            ["Fiesta èpica", "Fiesta desastre"],
+            ["Broma bona", "Broma dolenta"],
+            ["Somni realitzable", "Somni impossible"],
+            ["Lloc secret", "Lloc famós"],
+            ["Moda cool", "Moda ridícula"],
+            ["Selfie guapo", "Selfie horrorós"],
+            ["Aplicació útil", "Aplicació inútil"],
+            ["Plan genial", "Plan desastre"],
+            ["Ninot de neu bonic", "Ninot de neu terrorífic"],
+            ["Menjar deliciós", "Menjar horrible"],
+            ["Foto èpica", "Foto cutre"],
+            ["Programa interessant", "Programa avorrit"],
+            ["Crush impossible", "Crush possible"],
+            ["Nit perfecta", "Nit avorrida"],
+            ["Personatge estimat", "Personatge odiat"],
+            ["Final inesperat", "Final previsible"],
+            ["Primera impressió bona", "Primera impressió dolenta"],
+            ["Veí sexy", "Veí gens sexy"],
+            ["Persona hot", "Persona gens hot"],
+            ["Passiu", "Actiu"],
+            ["Acte tòxic", "Acte no tòxic"],
+            ["Hardcore sex", "Vanilla sex"],
+            ["Un petó robat", "Cap petó"],
+            ["Cita romàntica", "Cita freda"],
+            ["Besos lents", "Besos ràpids"],
+            ["Amor platònic", "Amor apassionat"],
+            ["Un match de Ginder bo", "Un match de Ginder dolent"],
+            ["Sessió de sexting", "Sessió avorrida"],
+            ["Flirteig subtil", "Flirteig descarat"],
+            ["Abraçada càlida", "Abraçada freda"],
+            ["One night stand", "Relació llarga"],
+            ["Llum tènue", "Llum forta"],
+            ["Massatge sensual", "Massatge cutre"],
+            ["Música sexy", "Música incòmoda"],
+            ["Sexe espontani", "Sexe planificat"],
+            ["Conversa hot", "Conversa avorrida"],
+            ["Mirada intensa", "Mirada neutra"],
+            ["Parella tòxica", "Parella sana"],
+            ["Amor a primera vista", "Amor que tarda"],
+            ["Dominant", "Submís"],
+            ["Desig ardent", "Desig fred"],
+            ["Sexe ràpid", "Sexe lent"],
+            ["Fantasia complerta", "Fantasia frustrada"]
+        ];
+
+        // Game state
+        let gameState = {
+            roomCode: '',
+            playerName: '',
+            playerId: '',
+            isHost: false,
+            currentRound: 1,
+            totalRounds: 10,
+            score: 0,
+            currentCategory: null,
+            targetPosition: 0,
+            guessPosition: 50,
+            gamePhase: 'setup',
+            players: {},
+            currentClueGiver: '',
+            currentGuesser: '',
+            currentClue: '',
+            roundScores: [],
+            selectedRounds: 10
+        };
+
+        // Utility functions
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // FIXED: Updated calculateScore function to handle extreme positions correctly
+        function calculateScore(targetPos, guessPos) {
+            // Each part has equal width: 4% of total spectrum
+            const PART_WIDTH = 4;
+            
+            // Calculate boundaries of each zone part centered on targetPos
+            const zones = [
+                { start: targetPos - 2 * PART_WIDTH, end: targetPos - PART_WIDTH, score: 2 },      // Far left
+                { start: targetPos - PART_WIDTH, end: targetPos, score: 3 },                       // Near left  
+                { start: targetPos, end: targetPos + PART_WIDTH, score: 4 },                       // Center (target)
+                { start: targetPos + PART_WIDTH, end: targetPos + 2 * PART_WIDTH, score: 3 },      // Near right
+                { start: targetPos + 2 * PART_WIDTH, end: targetPos + 3 * PART_WIDTH, score: 2 }   // Far right
+            ];
+            
+            // Check each zone, even those that extend beyond bounds
+            for (const zone of zones) {
+                // Check if guess falls within this zone's original boundaries
+                // This allows scoring even when zones extend beyond 0-100
+                if (guessPos >= zone.start && guessPos < zone.end) {
+                    return zone.score;
+                }
+            }
+            
+            return 0; // No score if outside all zones
+        }
+
+        // NEW: History management functions
+        function generatePlayerPairKey(players) {
+            // Get all player names and sort them alphabetically for consistency
+            const playerNames = Object.values(players).map(p => p.name).sort();
+            return playerNames.join(' + ');
+        }
+
+        async function saveGameToHistory(playerPairKey, totalScore, rounds) {
+            const historyRef = ref(database, `history/${playerPairKey}/${rounds}_rounds`);
+            const newGameRef = push(historyRef);
+            
+            await set(newGameRef, {
+                score: totalScore,
+                maxScore: rounds * 4,
+                date: new Date().toLocaleDateString('ca-ES'),
+                timestamp: Date.now()
+            });
+        }
+
+        async function getPlayerHistory(playerPairKey, rounds) {
+            const historyRef = ref(database, `history/${playerPairKey}/${rounds}_rounds`);
+            const snapshot = await get(historyRef);
+            
+            if (!snapshot.exists()) {
+                return [];
+            }
+            
+            const games = [];
+            snapshot.forEach(child => {
+                games.push({
+                    id: child.key,
+                    ...child.val()
+                });
+            });
+            
+            // Sort by timestamp, newest first
+            return games.sort((a, b) => b.timestamp - a.timestamp);
+        }
+
+        async function checkIfNewRecord(playerPairKey, currentScore, rounds) {
+            if (currentScore === 0) return false;
+            
+            const history = await getPlayerHistory(playerPairKey, rounds);
+            if (history.length === 0) return true; // First game is always a record
+            
+            const bestScore = Math.max(...history.map(game => game.score));
+            return currentScore > bestScore;
+        }
+
+        // NEW: Word control functions
+        window.changeWord = async function() {
+            if (gameState.currentClueGiver !== gameState.playerId) return;
+            
+            // Select a random category from the list
+            const randomCategory = ALL_CATEGORIES[Math.floor(Math.random() * ALL_CATEGORIES.length)];
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/customCategory`]: randomCategory
+            };
+            
+            await update(ref(database), updates);
+        };
+
+        window.toggleEditWord = function() {
+            if (gameState.currentClueGiver !== gameState.playerId) return;
+            
+            const editSection = document.getElementById('wordEditSection');
+            const isVisible = editSection.style.display !== 'none';
+            
+            if (isVisible) {
+                editSection.style.display = 'none';
+            } else {
+                // Pre-fill with current words
+                const currentCategory = gameState.currentCategory;
+                if (currentCategory) {
+                    document.getElementById('leftWordInput').value = currentCategory[0];
+                    document.getElementById('rightWordInput').value = currentCategory[1];
+                }
+                editSection.style.display = 'block';
+            }
+        };
+
+        window.saveCustomWords = async function() {
+            const leftWord = document.getElementById('leftWordInput').value.trim();
+            const rightWord = document.getElementById('rightWordInput').value.trim();
+            
+            if (!leftWord || !rightWord) {
+                alert('Si us plau, omple ambdues paraules.');
+                return;
+            }
+            
+            const customCategory = [leftWord, rightWord];
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/customCategory`]: customCategory
+            };
+            
+            await update(ref(database), updates);
+            
+            // Hide edit section
+            document.getElementById('wordEditSection').style.display = 'none';
+        };
+
+        window.cancelEditWord = function() {
+            document.getElementById('wordEditSection').style.display = 'none';
+            document.getElementById('leftWordInput').value = '';
+            document.getElementById('rightWordInput').value = '';
+        };
+
+        // Round selection
+        window.selectRounds = function(rounds) {
+            gameState.selectedRounds = rounds;
+            document.getElementById('rounds5').classList.remove('selected');
+            document.getElementById('rounds10').classList.remove('selected');
+            document.getElementById(`rounds${rounds}`).classList.add('selected');
+        };
+
+        // Generate room code
+        window.generateRoomCode = function() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('roomCode').value = code;
+        };
+
+        // Join game
+        window.joinGame = async function() {
+            const playerName = document.getElementById('playerName').value.trim();
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+
+            if (!playerName || !roomCode) {
+                alert('Si us plau, omple tots els camps.');
+                return;
+            }
+
+            gameState.playerName = playerName;
+            gameState.roomCode = roomCode;
+            gameState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+
+            try {
+                const roomRef = ref(database, `rooms/${roomCode}`);
+                const roomSnapshot = await get(roomRef);
+                
+                if (!roomSnapshot.exists()) {
+                    gameState.isHost = true;
+                    await initializeRoom();
+                } else {
+                    const roomData = roomSnapshot.val();
+                    if (roomData.gamePhase !== 'waiting') {
+                        alert('El joc ja ha començat. No pots unir-te ara.');
+                        return;
+                    }
+                    gameState.isHost = false;
+                    gameState.selectedRounds = roomData.totalRounds || 10;
+                }
+
+                await addPlayerToRoom();
+                setupGameListeners();
+                showWaitingRoom();
+
+            } catch (error) {
+                console.error('Error joining game:', error);
+                alert('Error connectant-se al joc.');
+            }
+        };
+
+        async function initializeRoom() {
+            const shuffledCategories = shuffleArray([...ALL_CATEGORIES]);
+            
+            const roomData = {
+                host: gameState.playerId,
+                gamePhase: 'waiting',
+                currentRound: 1,
+                totalRounds: gameState.selectedRounds,
+                score: 0,
+                categories: shuffledCategories.slice(0, gameState.selectedRounds),
+                currentCategoryIndex: 0,
+                targetPosition: Math.floor(Math.random() * 100),
+                players: {},
+                guessPosition: 50,
+                playerOrder: [],
+                currentClueGiver: '',
+                currentGuesser: '',
+                currentClue: '',
+                roundScores: [],
+                customCategory: null
+            };
+
+            await set(ref(database, `rooms/${gameState.roomCode}`), roomData);
+        }
+
+        async function addPlayerToRoom() {
+            const playerData = {
+                name: gameState.playerName,
+                joinedAt: Date.now(),
+                isOnline: true
+            };
+
+            const playerRef = ref(database, `rooms/${gameState.roomCode}/players/${gameState.playerId}`);
+            await set(playerRef, playerData);
+
+            // Handle disconnection
+            onDisconnect(playerRef).update({ isOnline: false });
+        }
+
+        function setupGameListeners() {
+            const roomRef = ref(database, `rooms/${gameState.roomCode}`);
+            
+            onValue(roomRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const roomData = snapshot.val();
+                    updateGameState(roomData);
+                    updateUI();
+                } else {
+                    console.log('Room no longer exists');
+                }
+            });
+
+            document.getElementById('connectionStatus').textContent = 'Connectat';
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+        }
+
+        function updateGameState(roomData) {
+            gameState.gamePhase = roomData.gamePhase || 'waiting';
+            gameState.currentRound = roomData.currentRound || 1;
+            gameState.totalRounds = roomData.totalRounds || 10;
+            gameState.score = roomData.score || 0;
+            gameState.players = roomData.players || {};
+            gameState.currentClueGiver = roomData.currentClueGiver || '';
+            gameState.currentGuesser = roomData.currentGuesser || '';
+            gameState.currentClue = roomData.currentClue || '';
+            gameState.roundScores = roomData.roundScores || [];
+            gameState.guessPosition = roomData.guessPosition || 50;
+            gameState.isHost = roomData.host === gameState.playerId;
+            
+            // Handle custom category (word changes)
+            if (roomData.customCategory) {
+                gameState.currentCategory = roomData.customCategory;
+            } else if (roomData.categories && roomData.currentCategoryIndex !== undefined) {
+                gameState.currentCategory = roomData.categories[roomData.currentCategoryIndex];
+            }
+            
+            if (roomData.targetPosition !== undefined) {
+                gameState.targetPosition = roomData.targetPosition;
+            }
+        }
+
+        function updateUI() {
+            updatePlayersList();
+            
+            switch (gameState.gamePhase) {
+                case 'waiting':
+                    showWaitingRoom();
+                    break;
+                case 'giving_clue':
+                    showGameBoard();
+                    showClueGivingPhase();
+                    break;
+                case 'guessing':
+                    showGameBoard();
+                    showGuessingPhase();
+                    break;
+                case 'reveal':
+                    showGameBoard();
+                    showRevealPhase();
+                    break;
+                case 'finished':
+                    showFinalScore();
+                    break;
+            }
+        }
+
+        function showWaitingRoom() {
+            document.getElementById('gameSetup').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'block';
+            document.getElementById('gameBoard').style.display = 'none';
+            document.getElementById('finalScore').style.display = 'none';
+            
+            const startBtn = document.getElementById('startBtn');
+            const hostMessage = document.getElementById('hostMessage');
+            
+            if (gameState.isHost) {
+                startBtn.style.display = 'inline-block';
+                hostMessage.textContent = `Tu ets l'host. Codi de sala: ${gameState.roomCode}`;
+            } else {
+                startBtn.style.display = 'none';
+                hostMessage.textContent = `Esperant que l'host comenci el joc... Codi: ${gameState.roomCode}`;
+            }
+        }
+
+        function showGameBoard() {
+            document.getElementById('gameSetup').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('gameBoard').style.display = 'block';
+            document.getElementById('finalScore').style.display = 'none';
+            
+            updateGameInfo();
+            updateCategory();
+            updateRoundScores();
+        }
+
+        function showClueGivingPhase() {
+            const isClueGiver = gameState.currentClueGiver === gameState.playerId;
+            
+            hideAllGameElements();
+            
+            // Show/hide word control buttons based on whether user is clue giver
+            const wordControlButtons = document.getElementById('wordControlButtons');
+            if (isClueGiver) {
+                wordControlButtons.style.display = 'flex';
+            } else {
+                wordControlButtons.style.display = 'none';
+            }
+            
+            if (isClueGiver) {
+                document.getElementById('roleInfo').textContent = 'Tu dones la pista!';
+                document.getElementById('clueSection').style.display = 'block';
+                // Show the target zone for clue giver
+                showTargetZone();
+            } else {
+                const clueGiverName = gameState.players[gameState.currentClueGiver]?.name || 'Jugador';
+                document.getElementById('roleInfo').textContent = `${clueGiverName} està donant la pista...`;
+                document.getElementById('waitingForClue').style.display = 'block';
+            }
+        }
+
+        function showGuessingPhase() {
+            const isGuesser = gameState.currentGuesser === gameState.playerId;
+            
+            hideAllGameElements();
+            
+            // Hide word control buttons during guessing phase
+            document.getElementById('wordControlButtons').style.display = 'none';
+            
+            document.getElementById('clueDisplay').style.display = 'block';
+            document.getElementById('currentClue').textContent = gameState.currentClue;
+            
+            if (isGuesser) {
+                document.getElementById('roleInfo').textContent = 'Tu endevines la posició!';
+                document.getElementById('sliderContainer').style.display = 'block';
+                document.getElementById('submitBtn').style.display = 'inline-block';
+                document.getElementById('guessSlider').value = 50;
+                updateGuessMarker();
+                // Guesser sees only the white spectrum, no target zone
+            } else {
+                const guesserName = gameState.players[gameState.currentGuesser]?.name || 'Jugador';
+                document.getElementById('roleInfo').textContent = `${guesserName} està endevinant...`;
+                // Other players see the target zone during guessing
+                showTargetZone();
+            }
+        }
+
+        function showRevealPhase() {
+            hideAllGameElements();
+            
+            showTargetZone();
+            showGuessMarker();
+            
+            // Show result display
+            const roundScore = calculateScore(gameState.targetPosition, gameState.guessPosition);
+            const resultDisplay = document.getElementById('resultDisplay');
+            const pointsText = document.getElementById('pointsText');
+            const congratulations = document.getElementById('congratulations');
+            
+            resultDisplay.style.display = 'block';
+            pointsText.textContent = `Punts: ${roundScore}`;
+            
+            // Set color based on score
+            if (roundScore > 0) {
+                resultDisplay.className = 'result-display success';
+                if (roundScore === 4) {
+                    congratulations.style.display = 'block';
+                } else {
+                    congratulations.style.display = 'none';
+                }
+            } else {
+                resultDisplay.className = 'result-display failure';
+                congratulations.style.display = 'none';
+            }
+            
+            if (gameState.isHost) {
+                document.getElementById('nextBtn').style.display = 'inline-block';
+            }
+        }
+
+        async function showFinalScore() {
+            document.getElementById('gameSetup').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('gameBoard').style.display = 'none';
+            document.getElementById('finalScore').style.display = 'block';
+            
+            const totalScore = gameState.score;
+            const maxScore = gameState.totalRounds * 4;
+            document.getElementById('totalScore').textContent = totalScore;
+            document.getElementById('maxScore').textContent = maxScore;
+            
+            // Generate player pair key and save to history
+            const playerPairKey = generatePlayerPairKey(gameState.players);
+            await saveGameToHistory(playerPairKey, totalScore, gameState.totalRounds);
+            
+            // Check if it's a new record
+            const isNewRecord = await checkIfNewRecord(playerPairKey, totalScore, gameState.totalRounds);
+            const recordMessage = document.getElementById('recordMessage');
+            if (isNewRecord) {
+                recordMessage.style.display = 'block';
+            } else {
+                recordMessage.style.display = 'none';
+            }
+            
+            // Show final message based on rounds and score
+            const finalMessage = document.getElementById('finalMessage');
+            let message = '';
+            let messageClass = '';
+            
+            if (gameState.totalRounds === 10) {
+                if (totalScore >= 30) {
+                    message = 'CONNEXIÓ TOTAL!';
+                    messageClass = 'excellent';
+                } else if (totalScore >= 20) {
+                    message = 'GENS MALAMENT';
+                    messageClass = 'great';
+                } else if (totalScore >= 10) {
+                    message = 'MILLORABLE';
+                    messageClass = 'good';
+                } else {
+                    message = 'CATASTRÒFIC';
+                    messageClass = 'poor';
+                }
+            } else { // 5 rounds
+                if (totalScore >= 15) {
+                    message = 'CONNEXIÓ TOTAL!';
+                    messageClass = 'excellent';
+                } else if (totalScore >= 10) {
+                    message = 'GENS MALAMENT';
+                    messageClass = 'great';
+                } else if (totalScore >= 5) {
+                    message = 'MILLORABLE';
+                    messageClass = 'good';
+                } else {
+                    message = 'CATASTRÒFIC';
+                    messageClass = 'poor';
+                }
+            }
+            
+            finalMessage.textContent = message;
+            finalMessage.className = `final-message ${messageClass}`;
+            
+            // Show detailed round scores
+            updateFinalRoundScores();
+            
+            // Show history
+            await updateHistoryDisplay(playerPairKey, gameState.totalRounds);
+        }
+
+        async function updateHistoryDisplay(playerPairKey, rounds) {
+            const history = await getPlayerHistory(playerPairKey, rounds);
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="history-item">Aquesta és la vostra primera partida!</div>';
+                return;
+            }
+            
+            // Show last 5 games
+            const recentGames = history.slice(0, 5);
+            recentGames.forEach((game, index) => {
+                const historyDiv = document.createElement('div');
+                historyDiv.className = 'history-item';
+                const isCurrentGame = index === 0; // Most recent is the current game
+                historyDiv.innerHTML = `
+                    ${isCurrentGame ? '<strong>Avui:</strong>' : `<strong>${game.date}:</strong>`} 
+                    ${game.score}/${game.maxScore} punts
+                    ${isCurrentGame ? ' (actual)' : ''}
+                `;
+                historyList.appendChild(historyDiv);
+            });
+            
+            if (history.length > 5) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'history-item';
+                moreDiv.style.opacity = '0.7';
+                moreDiv.textContent = `... i ${history.length - 5} partides més`;
+                historyList.appendChild(moreDiv);
+            }
+        }
+
+        function hideAllGameElements() {
+            document.getElementById('sliderContainer').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('guessMarker').style.display = 'none';
+            document.getElementById('targetZone').style.display = 'none';
+            document.getElementById('clueSection').style.display = 'none';
+            document.getElementById('waitingForClue').style.display = 'none';
+            document.getElementById('clueDisplay').style.display = 'none';
+            document.getElementById('resultDisplay').style.display = 'none';
+            document.getElementById('wordEditSection').style.display = 'none';
+        }
+
+        function updateGameInfo() {
+            document.getElementById('currentRound').textContent = gameState.currentRound;
+            document.getElementById('totalRounds').textContent = gameState.totalRounds;
+            document.getElementById('gameScore').textContent = gameState.score;
+            
+            let currentPlayerName = '';
+            if (gameState.currentClueGiver === gameState.playerId) {
+                currentPlayerName = 'Tu (donant pista)';
+            } else if (gameState.currentGuesser === gameState.playerId) {
+                currentPlayerName = 'Tu (endevinant)';
+            } else {
+                currentPlayerName = gameState.players[gameState.currentClueGiver]?.name || 'Esperant...';
+            }
+            document.getElementById('currentPlayer').textContent = currentPlayerName;
+        }
+
+        function updateCategory() {
+            if (gameState.currentCategory) {
+                document.getElementById('leftLabel').textContent = gameState.currentCategory[0];
+                document.getElementById('rightLabel').textContent = gameState.currentCategory[1];
+            }
+        }
+
+        function updatePlayersList() {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+            
+            Object.entries(gameState.players).forEach(([playerId, player]) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-item';
+                playerDiv.innerHTML = `
+                    <span>${player.name} ${playerId === gameState.playerId ? '(tu)' : ''}</span>
+                    <span>${player.isOnline ? '🟢' : '🔴'}</span>
+                `;
+                playersList.appendChild(playerDiv);
+            });
+        }
+
+        function updateRoundScores() {
+            if (gameState.roundScores.length === 0) {
+                document.getElementById('roundScores').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('roundScores').style.display = 'block';
+            const roundScoresList = document.getElementById('roundScoresList');
+            roundScoresList.innerHTML = '';
+            
+            gameState.roundScores.forEach((score, index) => {
+                const scoreDiv = document.createElement('div');
+                scoreDiv.className = 'round-score-item';
+                scoreDiv.textContent = `Ronda ${index + 1}: ${score} punts`;
+                roundScoresList.appendChild(scoreDiv);
+            });
+        }
+
+        function updateFinalRoundScores() {
+            const finalRoundScores = document.getElementById('finalRoundScores');
+            finalRoundScores.innerHTML = '';
+            
+            gameState.roundScores.forEach((score, index) => {
+                const scoreDiv = document.createElement('div');
+                scoreDiv.className = 'round-score-item';
+                scoreDiv.textContent = `Ronda ${index + 1}: ${score} punts`;
+                finalRoundScores.appendChild(scoreDiv);
+            });
+        }
+
+        function showTargetZone() {
+            const targetZone = document.getElementById('targetZone');
+            const PART_WIDTH = 4; // Each part is 4% of the spectrum
+            
+            targetZone.style.display = 'block';
+            const centerPos = gameState.targetPosition;
+            
+            // Define all possible zone parts with their positions and properties
+            const allParts = [
+                { start: centerPos - 2 * PART_WIDTH, end: centerPos - PART_WIDTH, class: 'zone-part-1', score: '2' },
+                { start: centerPos - PART_WIDTH, end: centerPos, class: 'zone-part-2', score: '3' },
+                { start: centerPos, end: centerPos + PART_WIDTH, class: 'zone-part-3', score: '4' },
+                { start: centerPos + PART_WIDTH, end: centerPos + 2 * PART_WIDTH, class: 'zone-part-4', score: '3' },
+                { start: centerPos + 2 * PART_WIDTH, end: centerPos + 3 * PART_WIDTH, class: 'zone-part-5', score: '2' }
+            ];
+            
+            // Filter parts that are within bounds and calculate visible portions
+            const visibleParts = allParts
+                .map((part, index) => {
+                    // Check if part intersects with visible spectrum (0-100)
+                    const visibleStart = Math.max(0, part.start);
+                    const visibleEnd = Math.min(100, part.end);
+                    
+                    if (visibleStart >= visibleEnd) return null; // Part is completely outside bounds
+                    
+                    return {
+                        ...part,
+                        visibleStart,
+                        visibleEnd,
+                        visibleWidth: visibleEnd - visibleStart,
+                        originalIndex: index
+                    };
+                })
+                .filter(part => part !== null);
+            
+            if (visibleParts.length === 0) {
+                targetZone.style.display = 'none';
+                return;
+            }
+            
+            // Calculate total zone bounds
+            const totalStart = Math.min(...visibleParts.map(p => p.visibleStart));
+            const totalEnd = Math.max(...visibleParts.map(p => p.visibleEnd));
+            const totalWidth = totalEnd - totalStart;
+            
+            // Position the target zone
+            targetZone.style.left = totalStart + '%';
+            targetZone.style.width = totalWidth + '%';
+            
+            // Clear existing content
+            targetZone.innerHTML = '';
+            
+            // Create visible parts
+            visibleParts.forEach((part) => {
+                const partDiv = document.createElement('div');
+                partDiv.className = `target-zone-part ${part.class}`;
+                
+                // Calculate position and width relative to the target zone
+                const relativeLeft = ((part.visibleStart - totalStart) / totalWidth) * 100;
+                const relativeWidth = (part.visibleWidth / totalWidth) * 100;
+                
+                partDiv.style.left = relativeLeft + '%';
+                partDiv.style.width = relativeWidth + '%';
+                partDiv.textContent = part.score;
+                
+                targetZone.appendChild(partDiv);
+            });
+        }
+
+        function showGuessMarker() {
+            const guessMarker = document.getElementById('guessMarker');
+            guessMarker.style.display = 'block';
+            guessMarker.style.left = gameState.guessPosition + '%';
+        }
+
+        function updateGuessMarker() {
+            const slider = document.getElementById('guessSlider');
+            const guessMarker = document.getElementById('guessMarker');
+            
+            if (guessMarker.style.display !== 'none') {
+                guessMarker.style.left = slider.value + '%';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('guessSlider').addEventListener('input', updateGuessMarker);
+
+        // Touch event handling for better mobile support
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isDragging = false;
+
+        document.getElementById('guessSlider').addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isDragging = true;
+        }, { passive: false });
+
+        document.getElementById('guessSlider').addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            
+            // Prevent scrolling if moving horizontally on slider
+            if (Math.abs(touchX - touchStartX) > Math.abs(touchY - touchStartY)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.getElementById('guessSlider').addEventListener('touchend', function(e) {
+            isDragging = false;
+        });
+
+        // Game actions
+        window.startGame = async function() {
+            if (!gameState.isHost) return;
+            
+            const playerIds = Object.keys(gameState.players);
+            if (playerIds.length < 2) {
+                alert('Es necessiten almenys 2 jugadors per començar.');
+                return;
+            }
+            
+            const shuffledPlayerOrder = shuffleArray([...playerIds]);
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/gamePhase`]: 'giving_clue',
+                [`rooms/${gameState.roomCode}/playerOrder`]: shuffledPlayerOrder,
+                [`rooms/${gameState.roomCode}/currentClueGiver`]: shuffledPlayerOrder[0],
+                [`rooms/${gameState.roomCode}/currentGuesser`]: shuffledPlayerOrder[1],
+                [`rooms/${gameState.roomCode}/targetPosition`]: Math.floor(Math.random() * 100),
+                [`rooms/${gameState.roomCode}/totalRounds`]: gameState.selectedRounds,
+                [`rooms/${gameState.roomCode}/customCategory`]: null // Reset custom category
+            };
+            
+            await update(ref(database), updates);
+        };
+
+        window.submitClue = async function() {
+            const clueInput = document.getElementById('clueInput');
+            const clue = clueInput.value.trim();
+            
+            if (!clue) {
+                alert('Si us plau, escriu una pista.');
+                return;
+            }
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/currentClue`]: clue,
+                [`rooms/${gameState.roomCode}/gamePhase`]: 'guessing'
+            };
+            
+            await update(ref(database), updates);
+            clueInput.value = '';
+        };
+
+        window.submitGuess = async function() {
+            const guessValue = parseInt(document.getElementById('guessSlider').value);
+            const roundScore = calculateScore(gameState.targetPosition, guessValue);
+            
+            const newRoundScores = [...gameState.roundScores, roundScore];
+            const newTotalScore = gameState.score + roundScore;
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/guessPosition`]: guessValue,
+                [`rooms/${gameState.roomCode}/gamePhase`]: 'reveal',
+                [`rooms/${gameState.roomCode}/score`]: newTotalScore,
+                [`rooms/${gameState.roomCode}/roundScores`]: newRoundScores
+            };
+            
+            await update(ref(database), updates);
+        };
+
+        window.nextRound = async function() {
+            if (!gameState.isHost) return;
+            
+            const nextRound = gameState.currentRound + 1;
+            
+            if (nextRound > gameState.totalRounds) {
+                const updates = {
+                    [`rooms/${gameState.roomCode}/gamePhase`]: 'finished'
+                };
+                await update(ref(database), updates);
+                return;
+            }
+            
+            // Rotate players
+            const playerIds = Object.keys(gameState.players);
+            const currentClueGiverIndex = playerIds.indexOf(gameState.currentClueGiver);
+            const currentGuesserIndex = playerIds.indexOf(gameState.currentGuesser);
+            
+            const nextClueGiverIndex = (currentGuesserIndex) % playerIds.length;
+            const nextGuesserIndex = (currentClueGiverIndex) % playerIds.length;
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/currentRound`]: nextRound,
+                [`rooms/${gameState.roomCode}/currentCategoryIndex`]: nextRound - 1,
+                [`rooms/${gameState.roomCode}/gamePhase`]: 'giving_clue',
+                [`rooms/${gameState.roomCode}/currentClueGiver`]: playerIds[nextClueGiverIndex],
+                [`rooms/${gameState.roomCode}/currentGuesser`]: playerIds[nextGuesserIndex],
+                [`rooms/${gameState.roomCode}/targetPosition`]: Math.floor(Math.random() * 100),
+                [`rooms/${gameState.roomCode}/currentClue`]: '',
+                [`rooms/${gameState.roomCode}/guessPosition`]: 50,
+                [`rooms/${gameState.roomCode}/customCategory`]: null // Reset custom category for new round
+            };
+            
+            await update(ref(database), updates);
+        };
+
+        window.startNewGame = async function() {
+            if (!gameState.isHost) return;
+            
+            const shuffledCategories = shuffleArray([...ALL_CATEGORIES]);
+            const playerIds = Object.keys(gameState.players);
+            const shuffledPlayerOrder = shuffleArray([...playerIds]);
+            
+            const updates = {
+                [`rooms/${gameState.roomCode}/gamePhase`]: 'giving_clue',
+                [`rooms/${gameState.roomCode}/currentRound`]: 1,
+                [`rooms/${gameState.roomCode}/score`]: 0,
+                [`rooms/${gameState.roomCode}/categories`]: shuffledCategories.slice(0, gameState.totalRounds),
+                [`rooms/${gameState.roomCode}/currentCategoryIndex`]: 0,
+                [`rooms/${gameState.roomCode}/currentClueGiver`]: shuffledPlayerOrder[0],
+                [`rooms/${gameState.roomCode}/currentGuesser`]: shuffledPlayerOrder[1],
+                [`rooms/${gameState.roomCode}/targetPosition`]: Math.floor(Math.random() * 100),
+                [`rooms/${gameState.roomCode}/currentClue`]: '',
+                [`rooms/${gameState.roomCode}/guessPosition`]: 50,
+                [`rooms/${gameState.roomCode}/roundScores`]: [],
+                [`rooms/${gameState.roomCode}/customCategory`]: null
+            };
+            
+            await update(ref(database), updates);
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus on player name input
+            document.getElementById('playerName').focus();
+            
+            // Allow Enter key to join game
+            document.getElementById('playerName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('joinBtn').click();
+                }
+            });
+            
+            document.getElementById('roomCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('joinBtn').click();
+                }
+            });
+            
+            // Allow Enter key to submit clue
+            document.getElementById('clueInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    window.submitClue();
+                }
+            });
+
+            // Allow Enter key to save custom words
+            document.getElementById('leftWordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    window.saveCustomWords();
+                }
+            });
+
+            document.getElementById('rightWordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    window.saveCustomWords();
+                }
+            });
+        });
+
+        // Handle page refresh/close
+        window.addEventListener('beforeunload', function() {
+            if (gameState.playerId && gameState.roomCode) {
+                const playerRef = ref(database, `rooms/${gameState.roomCode}/players/${gameState.playerId}`);
+                set(playerRef, null); // Remove player on page close
+            }
+        });
+
+    </script>
+</body>
+</html>
